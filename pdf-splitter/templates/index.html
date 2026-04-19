@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Splitter</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📄 PDF Splitter</h1>
+            <p class="subtitle">Split your 10+ page PDF into 3 parts instantly</p>
+        </header>
+
+        <main>
+            <!-- Upload Section -->
+            <section class="upload-section">
+                <div class="upload-zone" id="uploadZone">
+                    <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                    <p class="upload-text">Drag & drop your PDF here</p>
+                    <p class="upload-subtext">or</p>
+                    <label for="fileInput" class="file-input-label">Click to browse</label>
+                    <input type="file" id="fileInput" accept=".pdf" class="file-input">
+                </div>
+
+                <div id="fileInfo" class="file-info" style="display: none;">
+                    <p class="info-text">📁 <span id="fileName">file.pdf</span></p>
+                </div>
+            </section>
+
+            <!-- Status Section -->
+            <section class="status-section" id="statusSection" style="display: none;">
+                <div class="status-item">
+                    <div class="spinner" id="spinner"></div>
+                    <p id="statusText">Processing your PDF...</p>
+                </div>
+            </section>
+
+            <!-- Error Section -->
+            <section class="error-section" id="errorSection" style="display: none;">
+                <div class="error-box">
+                    <p class="error-icon">⚠️</p>
+                    <p class="error-text" id="errorMessage">An error occurred</p>
+                </div>
+            </section>
+
+            <!-- Results Section -->
+            <section class="results-section" id="resultsSection" style="display: none;">
+                <div class="results-header">
+                    <p class="success-icon">✅</p>
+                    <h2>PDF Split Successfully!</h2>
+                    <p class="results-subtitle">Your PDF has been split into 3 parts. Download them below:</p>
+                </div>
+
+                <div class="download-grid">
+                    <div class="download-item">
+                        <div class="download-card">
+                            <div class="card-header part1">
+                                <span class="part-number">1</span>
+                            </div>
+                            <div class="card-body">
+                                <h3>Pages 1-4</h3>
+                                <p class="pages-count">4 pages</p>
+                                <a href="#" id="downloadPart1" class="download-button" download>
+                                    ⬇️ Download
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="download-item">
+                        <div class="download-card">
+                            <div class="card-header part2">
+                                <span class="part-number">2</span>
+                            </div>
+                            <div class="card-body">
+                                <h3>Pages 5-6</h3>
+                                <p class="pages-count">2 pages</p>
+                                <a href="#" id="downloadPart2" class="download-button" download>
+                                    ⬇️ Download
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="download-item">
+                        <div class="download-card">
+                            <div class="card-header part3">
+                                <span class="part-number">3</span>
+                            </div>
+                            <div class="card-body">
+                                <h3>Pages 7+</h3>
+                                <p class="pages-count" id="part3Pages">4+ pages</p>
+                                <a href="#" id="downloadPart3" class="download-button" download>
+                                    ⬇️ Download
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="reset-button" onclick="resetForm()">⚙️ Split Another PDF</button>
+            </section>
+
+            <!-- Info Section -->
+            <section class="info-section">
+                <h3>How it works:</h3>
+                <ul>
+                    <li>📤 Upload a PDF with 10+ pages</li>
+                    <li>✂️ Automatically split into 3 parts (Pages 1-4, 5-6, 7+)</li>
+                    <li>⬇️ Download each part as a separate PDF</li>
+                </ul>
+                <p class="privacy-note">💡 All files are processed locally and deleted after download. Nothing is stored.</p>
+            </section>
+        </main>
+
+        <footer>
+            <p>PDF Splitter v1.0 • Works on desktop, tablet, and mobile</p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
