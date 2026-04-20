@@ -1,6 +1,5 @@
 /**
  * PDF Splitter Frontend Logic
- * Handles file upload, validation, and download links
  */
 
 const uploadZone = document.getElementById('uploadZone');
@@ -25,7 +24,6 @@ function preventDefaults(e) {
     e.stopPropagation();
 }
 
-// Highlight drop zone on drag
 ['dragenter', 'dragover'].forEach(eventName => {
     uploadZone.addEventListener(eventName, () => {
         uploadZone.classList.add('dragover');
@@ -40,20 +38,21 @@ function preventDefaults(e) {
 
 // Handle drop
 uploadZone.addEventListener('drop', (e) => {
-    const dt = e.dataTransfer;
-    const files = dt.files;
+    const files = e.dataTransfer.files;
     handleFiles(files);
 }, false);
 
-// Handle click to browse
+// Handle click - fix double trigger on iOS Safari
 uploadZone.addEventListener('click', (e) => {
-    if (e.target !== fileInput) {
+    if (e.target !== fileInput && e.target.tagName !== 'LABEL') {
         fileInput.click();
     }
 });
 
 fileInput.addEventListener('change', (e) => {
-    handleFiles(e.target.files);
+    if (e.target.files.length > 0) {
+        handleFiles(e.target.files);
+    }
 });
 
 /**
@@ -64,25 +63,18 @@ function handleFiles(files) {
 
     const file = files[0];
 
-    // Safari fix: check extension instead of MIME type
-    const fileNameLower = file.name.toLowerCase();
-    const isValidPDF = fileNameLower.endsWith('.pdf');
-
-    if (!isValidPDF) {
+    // Check extension only - Safari sends wrong MIME type
+    if (!file.name.toLowerCase().endsWith('.pdf')) {
         showError('Invalid file type. Please select a PDF file.');
-        resetForm();
         return;
     }
 
-    // Validate file size (50MB)
     const maxSize = 50 * 1024 * 1024;
     if (file.size > maxSize) {
         showError('File is too large. Maximum size is 50MB.');
-        resetForm();
         return;
     }
 
-    // Show file info and upload
     fileName.textContent = file.name;
     fileInfo.style.display = 'block';
     uploadFile(file);
@@ -92,7 +84,6 @@ function handleFiles(files) {
  * Upload file to server
  */
 function uploadFile(file) {
-    // Show loading status
     statusSection.style.display = 'block';
     errorSection.style.display = 'none';
     resultsSection.style.display = 'none';
@@ -100,17 +91,22 @@ function uploadFile(file) {
     uploadZone.style.pointerEvents = 'none';
 
     const formData = new FormData();
-    formData.append('pdf', file);
+    formData.append('pdf', file, file.name); // explicit filename for Safari
 
     fetch('/split', {
         method: 'POST',
         body: formData
+        // Do NOT set Content-Type header - browser must set it with boundary
     })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(err => { throw new Error(err.message); });
+            }
+            return response.json();
+        })
         .then(data => {
             uploadZone.style.opacity = '1';
             uploadZone.style.pointerEvents = 'auto';
-
             if (data.status === 'success') {
                 showResults(data);
             } else {
@@ -120,7 +116,7 @@ function uploadFile(file) {
         .catch(error => {
             uploadZone.style.opacity = '1';
             uploadZone.style.pointerEvents = 'auto';
-            showError('Network error. Please try again.');
+            showError(error.message || 'Network error. Please try again.');
             console.error('Error:', error);
         });
 }
@@ -157,7 +153,8 @@ function showResults(data) {
     grid.innerHTML = '';
 
     parts.forEach((part, index) => {
-        const fileUrl = `/download-file/${data.folder_name}/${encodeURIComponent(part.file)}`;
+        // Use encodeURIComponent for spaces in filename
+        const fileUrl = `/download-file/${encodeURIComponent(data.folder_name)}/${encodeURIComponent(part.file)}`;
 
         const item = document.createElement('div');
         item.className = 'download-item';
@@ -174,7 +171,6 @@ function showResults(data) {
             </div>
         `;
 
-        // Click on file name to download
         item.querySelector('.clickable-file').addEventListener('click', () => {
             downloadFile(fileUrl, part.file);
         });
@@ -182,23 +178,26 @@ function showResults(data) {
         grid.appendChild(item);
     });
 
-    // Set ZIP download button
+    // ZIP button
+    const zipUrl = `/download-zip/${encodeURIComponent(data.folder_name)}`;
     const downloadZipBtn = document.getElementById('downloadZipBtn');
-    downloadZipBtn.href = data.download_url;
+    downloadZipBtn.href = zipUrl;
     downloadZipBtn.onclick = (e) => {
         e.preventDefault();
-        downloadFile(data.download_url, `${data.folder_name}.zip`);
+        downloadFile(zipUrl, `${data.folder_name}.zip`);
     };
 }
 
 /**
- * Download file
+ * Download file - works on Chrome, Safari, iOS
  */
 function downloadFile(url, filename) {
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
     const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 
-    if (isSafari) {
-        window.location.href = url;
+    if (isIOS || isSafari) {
+        // Safari/iOS: open in new tab - user can share/save from there
+        window.open(url, '_blank');
     } else {
         const link = document.createElement('a');
         link.href = url;
@@ -210,7 +209,7 @@ function downloadFile(url, filename) {
 }
 
 /**
- * Reset form for another upload
+ * Reset form
  */
 function resetForm() {
     fileInput.value = '';
