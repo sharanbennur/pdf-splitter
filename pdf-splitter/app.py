@@ -167,6 +167,27 @@ def download_zip(folder_name):
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
+@app.route('/download-file/<folder_name>/<filename>', methods=['GET'])
+def download_file(folder_name, filename):
+    """Download a single split PDF file."""
+    try:
+        folder_name = secure_filename(folder_name)
+        filename = secure_filename(filename)
+        file_path = os.path.join(UPLOAD_FOLDER, folder_name, filename)
+
+        if not os.path.exists(file_path):
+            return jsonify({'status': 'error', 'message': 'File not found'}), 404
+
+        return send_file(
+            file_path,
+            mimetype='application/pdf',
+            as_attachment=True,
+            download_name=filename
+        )
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
 @app.after_request
 def cleanup_uploaded_files(response):
     """Clean up old temporary files."""

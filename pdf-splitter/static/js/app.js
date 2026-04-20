@@ -46,8 +46,10 @@ uploadZone.addEventListener('drop', (e) => {
 }, false);
 
 // Handle click to browse
-uploadZone.addEventListener('click', () => {
-    fileInput.click();
+uploadZone.addEventListener('click', (e) => {
+    if (e.target !== fileInput) {
+        fileInput.click();
+    }
 });
 
 fileInput.addEventListener('change', (e) => {
@@ -62,15 +64,18 @@ function handleFiles(files) {
 
     const file = files[0];
 
-    // Validate file type
-    if (file.type !== 'application/pdf') {
+    // Safari fix: check extension instead of MIME type
+    const fileNameLower = file.name.toLowerCase();
+    const isValidPDF = fileNameLower.endsWith('.pdf');
+
+    if (!isValidPDF) {
         showError('Invalid file type. Please select a PDF file.');
         resetForm();
         return;
     }
 
     // Validate file size (50MB)
-    const maxSize = 50 * 1024 * 1024; // 50MB in bytes
+    const maxSize = 50 * 1024 * 1024;
     if (file.size > maxSize) {
         showError('File is too large. Maximum size is 50MB.');
         resetForm();
@@ -138,28 +143,70 @@ function showResults(data) {
     errorSection.style.display = 'none';
     resultsSection.style.display = 'block';
 
-    // Update folder name
     folderName.textContent = `📁 Folder: ${data.folder_name} (5 files ready to download)`;
+
+    const parts = [
+        { label: 'Case Sheet',         pages: 'Pages 1-5',  file: 'Case Sheet.pdf',         partClass: 'part1' },
+        { label: 'Progress Note',      pages: 'Page 3',     file: 'Progress Note.pdf',      partClass: 'part2' },
+        { label: 'Final Bill',         pages: 'Page 6',     file: 'Final Bill.pdf',         partClass: 'part3' },
+        { label: 'Letter & Later',     pages: 'Pages 7-10', file: 'Letter and Later.pdf',   partClass: 'part4' },
+        { label: 'Examination Report', pages: 'Page 11+',   file: 'Examination Report.pdf', partClass: 'part5' },
+    ];
+
+    const grid = document.getElementById('downloadGrid');
+    grid.innerHTML = '';
+
+    parts.forEach((part, index) => {
+        const fileUrl = `/download-file/${data.folder_name}/${encodeURIComponent(part.file)}`;
+
+        const item = document.createElement('div');
+        item.className = 'download-item';
+        item.innerHTML = `
+            <div class="download-card">
+                <div class="card-header ${part.partClass}">
+                    <span class="part-number">${index + 1}</span>
+                </div>
+                <div class="card-body">
+                    <h3>${part.label}</h3>
+                    <p class="pages-count">${part.pages}</p>
+                    <p class="file-name clickable-file" title="Click to download">${part.file}</p>
+                </div>
+            </div>
+        `;
+
+        // Click on file name to download
+        item.querySelector('.clickable-file').addEventListener('click', () => {
+            downloadFile(fileUrl, part.file);
+        });
+
+        grid.appendChild(item);
+    });
 
     // Set ZIP download button
     const downloadZipBtn = document.getElementById('downloadZipBtn');
     downloadZipBtn.href = data.download_url;
-    downloadZipBtn.addEventListener('click', (e) => {
+    downloadZipBtn.onclick = (e) => {
         e.preventDefault();
         downloadFile(data.download_url, `${data.folder_name}.zip`);
-    });
+    };
 }
 
 /**
  * Download file
  */
 function downloadFile(url, filename) {
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+
+    if (isSafari) {
+        window.location.href = url;
+    } else {
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
 }
 
 /**

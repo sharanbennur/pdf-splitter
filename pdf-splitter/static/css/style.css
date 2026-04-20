@@ -397,6 +397,16 @@ footer {
     background: #f8f9ff;
 }
 
+.clickable-file {
+    cursor: pointer;
+    color: #2563eb;
+    text-decoration: underline;
+}
+
+.clickable-file:hover {
+    color: #1d4ed8;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .container {
