@@ -153,7 +153,7 @@ def download_zip(folder_name):
             for filename in os.listdir(folder_path):
                 file_path = os.path.join(folder_path, filename)
                 if os.path.isfile(file_path):
-                    zip_file.write(file_path, arcname=f'{folder_name}/{filename}')
+                    zip_file.write(file_path, arcname=filename)
 
         zip_buffer.seek(0)
         return send_file(
