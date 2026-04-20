@@ -12,6 +12,7 @@ const errorSection = document.getElementById('errorSection');
 const errorMessage = document.getElementById('errorMessage');
 const resultsSection = document.getElementById('resultsSection');
 const statusText = document.getElementById('statusText');
+const folderName = document.getElementById('folderName');
 
 // Prevent default drag behaviors
 ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
@@ -137,34 +138,15 @@ function showResults(data) {
     errorSection.style.display = 'none';
     resultsSection.style.display = 'block';
 
-    // Set download links
-    const part1Btn = document.getElementById('downloadPart1');
-    const part2Btn = document.getElementById('downloadPart2');
-    const part3Btn = document.getElementById('downloadPart3');
+    // Update folder name
+    folderName.textContent = `📁 Folder: ${data.folder_name} (5 files ready to download)`;
 
-    part1Btn.href = data.files.part1.url;
-    part1Btn.download = data.files.part1.name;
-
-    part2Btn.href = data.files.part2.url;
-    part2Btn.download = data.files.part2.name;
-
-    part3Btn.href = data.files.part3.url;
-    part3Btn.download = data.files.part3.name;
-
-    // Trigger download on button click
-    part1Btn.addEventListener('click', (e) => {
+    // Set ZIP download button
+    const downloadZipBtn = document.getElementById('downloadZipBtn');
+    downloadZipBtn.href = data.download_url;
+    downloadZipBtn.addEventListener('click', (e) => {
         e.preventDefault();
-        downloadFile(data.files.part1.url, data.files.part1.name);
-    });
-
-    part2Btn.addEventListener('click', (e) => {
-        e.preventDefault();
-        downloadFile(data.files.part2.url, data.files.part2.name);
-    });
-
-    part3Btn.addEventListener('click', (e) => {
-        e.preventDefault();
-        downloadFile(data.files.part3.url, data.files.part3.name);
+        downloadFile(data.download_url, `${data.folder_name}.zip`);
     });
 }
 

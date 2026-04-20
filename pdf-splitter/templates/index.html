@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDF Splitter</title>
+    <title>PDF Splitter Pro</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>📄 PDF Splitter</h1>
-            <p class="subtitle">Split your 10+ page PDF into 3 parts instantly</p>
+            <h1>📄 PDF Splitter Pro</h1>
+            <p class="subtitle">Split your 11+ page PDF into 5 organized documents</p>
         </header>
 
         <main>
@@ -54,73 +54,106 @@
                 <div class="results-header">
                     <p class="success-icon">✅</p>
                     <h2>PDF Split Successfully!</h2>
-                    <p class="results-subtitle">Your PDF has been split into 3 parts. Download them below:</p>
+                    <p class="results-subtitle" id="folderName">Your PDF has been split into 5 parts</p>
                 </div>
 
                 <div class="download-grid">
+                    <!-- Part 1 -->
                     <div class="download-item">
                         <div class="download-card">
                             <div class="card-header part1">
                                 <span class="part-number">1</span>
                             </div>
                             <div class="card-body">
-                                <h3>Pages 1-4</h3>
-                                <p class="pages-count">4 pages</p>
-                                <a href="#" id="downloadPart1" class="download-button" download>
-                                    ⬇️ Download
-                                </a>
+                                <h3>Case Sheet</h3>
+                                <p class="pages-count">Pages 1-5</p>
+                                <p class="file-name">Case Sheet.pdf</p>
                             </div>
                         </div>
                     </div>
 
+                    <!-- Part 2 -->
                     <div class="download-item">
                         <div class="download-card">
                             <div class="card-header part2">
                                 <span class="part-number">2</span>
                             </div>
                             <div class="card-body">
-                                <h3>Pages 5-6</h3>
-                                <p class="pages-count">2 pages</p>
-                                <a href="#" id="downloadPart2" class="download-button" download>
-                                    ⬇️ Download
-                                </a>
+                                <h3>Progress Note</h3>
+                                <p class="pages-count">Page 3</p>
+                                <p class="file-name">Progress Note.pdf</p>
                             </div>
                         </div>
                     </div>
 
+                    <!-- Part 3 -->
                     <div class="download-item">
                         <div class="download-card">
                             <div class="card-header part3">
                                 <span class="part-number">3</span>
                             </div>
                             <div class="card-body">
-                                <h3>Pages 7+</h3>
-                                <p class="pages-count" id="part3Pages">4+ pages</p>
-                                <a href="#" id="downloadPart3" class="download-button" download>
-                                    ⬇️ Download
-                                </a>
+                                <h3>Final Bill</h3>
+                                <p class="pages-count">Page 6</p>
+                                <p class="file-name">Final Bill.pdf</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Part 4 -->
+                    <div class="download-item">
+                        <div class="download-card">
+                            <div class="card-header part4">
+                                <span class="part-number">4</span>
+                            </div>
+                            <div class="card-body">
+                                <h3>Letter & Later</h3>
+                                <p class="pages-count">Pages 7-10</p>
+                                <p class="file-name">Letter and Later.pdf</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Part 5 -->
+                    <div class="download-item">
+                        <div class="download-card">
+                            <div class="card-header part5">
+                                <span class="part-number">5</span>
+                            </div>
+                            <div class="card-body">
+                                <h3>Examination Report</h3>
+                                <p class="pages-count">Page 11+</p>
+                                <p class="file-name">Examination Report.pdf</p>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <button class="reset-button" onclick="resetForm()">⚙️ Split Another PDF</button>
+                <div class="download-buttons">
+                    <a href="#" id="downloadZipBtn" class="download-button primary">
+                        ⬇️ Download All as ZIP
+                    </a>
+                    <button class="reset-button secondary" onclick="resetForm()">
+                        ⚙️ Split Another PDF
+                    </button>
+                </div>
             </section>
 
             <!-- Info Section -->
             <section class="info-section">
                 <h3>How it works:</h3>
                 <ul>
-                    <li>📤 Upload a PDF with 10+ pages</li>
-                    <li>✂️ Automatically split into 3 parts (Pages 1-4, 5-6, 7+)</li>
-                    <li>⬇️ Download each part as a separate PDF</li>
+                    <li>📤 Upload a PDF with 11+ pages</li>
+                    <li>✂️ Automatically split into 5 organized documents</li>
+                    <li>📁 Files organized in a folder (named after your PDF)</li>
+                    <li>⬇️ Download all files as a ZIP archive</li>
                 </ul>
-                <p class="privacy-note">💡 All files are processed locally and deleted after download. Nothing is stored.</p>
+                <p class="privacy-note">💡 All files are processed locally and deleted after 1 hour. Nothing is stored permanently.</p>
             </section>
         </main>
 
         <footer>
-            <p>PDF Splitter v1.0 • Works on desktop, tablet, and mobile</p>
+            <p>PDF Splitter Pro v1.0 • Works on desktop, tablet, and mobile</p>
         </footer>
     </div>
 

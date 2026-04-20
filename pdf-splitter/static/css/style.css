@@ -269,6 +269,14 @@ main {
     background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
 }
 
+.card-header.part4 {
+    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+}
+
+.card-header.part5 {
+    background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+}
+
 .part-number {
     font-size: 3rem;
     font-weight: 700;
@@ -290,6 +298,13 @@ main {
     color: #999;
     font-size: 0.9rem;
     margin-bottom: 16px;
+}
+
+.file-name {
+    color: #666;
+    font-size: 0.85rem;
+    margin-top: 8px;
+    font-weight: 500;
 }
 
 .download-button {
@@ -315,23 +330,22 @@ main {
     transform: scale(0.98);
 }
 
-.reset-button {
-    display: block;
-    margin: 0 auto;
-    background: white;
-    color: #667eea;
-    border: 2px solid #667eea;
-    padding: 12px 32px;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
+.download-buttons {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 30px;
+}
+
+.download-button.primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 14px 32px;
     font-size: 1rem;
 }
 
-.reset-button:hover {
-    background: #f8f9ff;
-    transform: scale(1.05);
+.download-button.primary:hover {
+    box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
 }
 
 /* Info Section */
@@ -371,6 +385,16 @@ footer {
     text-align: center;
     color: #999;
     font-size: 0.9rem;
+}
+
+.reset-button.secondary {
+    background: white;
+    color: #667eea;
+    border: 2px solid #667eea;
+}
+
+.reset-button.secondary:hover {
+    background: #f8f9ff;
 }
 
 /* Responsive Design */

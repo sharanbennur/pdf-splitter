@@ -1,5 +1,7 @@
 import os
+import shutil
 import tempfile
+import zipfile
 from flask import Flask, render_template, request, send_file, jsonify
 from PyPDF2 import PdfReader, PdfWriter
 from werkzeug.utils import secure_filename
@@ -21,57 +23,72 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
-def split_pdf(pdf_file):
+def split_pdf(pdf_file, original_filename):
     """
-    Split PDF into 3 parts:
-    - Part 1: Pages 1-4 (PDF indices 0-3)
-    - Part 2: Pages 5-6 (PDF indices 4-5)
-    - Part 3: Pages 7-10+ (PDF indices 6+)
+    Split PDF into 5 parts:
+    - Part 1: Pages 1-5, name: Case Sheet.pdf
+    - Part 2: Page 3, name: Progress Note.pdf
+    - Part 3: Page 6, name: Final Bill.pdf
+    - Part 4: Pages 7-10, name: Letter and Later.pdf
+    - Part 5: Page 11+, name: Examination Report.pdf
 
-    Returns: (part1_bytes, part2_bytes, part3_bytes) or raises exception
+    Returns: folder path containing all 5 PDFs or raises exception
     """
     try:
         # Read PDF
         reader = PdfReader(pdf_file)
         total_pages = len(reader.pages)
 
-        # Validate page count
-        if total_pages < 10:
-            raise ValueError(f"PDF must have at least 10 pages. Current: {total_pages}")
+        # Validate page count (need at least 11 pages)
+        if total_pages < 11:
+            raise ValueError(f"PDF must have at least 11 pages. Current: {total_pages}")
 
-        # Create writers for each part
-        writer1 = PdfWriter()
-        writer2 = PdfWriter()
-        writer3 = PdfWriter()
+        # Create folder for this PDF
+        pdf_name = os.path.splitext(original_filename)[0]  # Remove .pdf extension
+        safe_name = secure_filename(pdf_name)
+        output_folder = os.path.join(UPLOAD_FOLDER, safe_name)
+        os.makedirs(output_folder, exist_ok=True)
 
-        # Part 1: Pages 1-4 (indices 0-3)
-        for i in range(0, 4):
-            writer1.add_page(reader.pages[i])
+        # Define parts: (start_page, end_page, filename)
+        # Note: PDF indices are 0-based, but pages are 1-based
+        parts = [
+            (1, 5, "Case Sheet.pdf"),        # Pages 1-5
+            (3, 3, "Progress Note.pdf"),     # Page 3 only
+            (6, 6, "Final Bill.pdf"),        # Page 6 only
+            (7, 10, "Letter and Later.pdf"), # Pages 7-10
+            (11, total_pages, "Examination Report.pdf")  # Pages 11+
+        ]
 
-        # Part 2: Pages 5-6 (indices 4-5)
-        for i in range(4, 6):
-            writer2.add_page(reader.pages[i])
+        # Create each PDF
+        for start_page, end_page, filename in parts:
+            writer = PdfWriter()
 
-        # Part 3: Pages 7+ (indices 6+)
-        for i in range(6, total_pages):
-            writer3.add_page(reader.pages[i])
+            # Convert page numbers to indices (0-based)
+            start_idx = start_page - 1
+            end_idx = end_page  # end_page is inclusive, but range is exclusive
 
-        # Write to BytesIO objects (in-memory)
-        output1 = BytesIO()
-        output2 = BytesIO()
-        output3 = BytesIO()
+            # Ensure indices are within bounds
+            start_idx = max(0, start_idx)
+            end_idx = min(total_pages, end_idx)
 
-        writer1.write(output1)
-        writer2.write(output2)
-        writer3.write(output3)
+            # Add pages to writer
+            for i in range(start_idx, end_idx):
+                writer.add_page(reader.pages[i])
 
-        output1.seek(0)
-        output2.seek(0)
-        output3.seek(0)
+            # Write PDF to file
+            output_path = os.path.join(output_folder, filename)
+            with open(output_path, 'wb') as f:
+                writer.write(f)
 
-        return output1, output2, output3
+        return output_folder, safe_name
 
     except Exception as e:
+        # Clean up folder if something goes wrong
+        try:
+            if 'output_folder' in locals():
+                shutil.rmtree(output_folder, ignore_errors=True)
+        except:
+            pass
         raise Exception(f"Error processing PDF: {str(e)}")
 
 
@@ -86,7 +103,7 @@ def split():
     """
     Handle PDF split request.
     Expects: file upload with key 'pdf'
-    Returns: JSON with file paths or error message
+    Returns: JSON with folder name and download URL
     """
     try:
         # Check if file is present
@@ -102,33 +119,13 @@ def split():
             return jsonify({'status': 'error', 'message': 'Invalid file type. Only PDF files allowed'}), 400
 
         # Split PDF
-        part1, part2, part3 = split_pdf(file)
-
-        # Store in session for download
-        # We'll use temp file names and return them
-        import uuid
-        session_id = str(uuid.uuid4())
-
-        # Save to temporary files
-        part1_path = os.path.join(UPLOAD_FOLDER, f'{session_id}_part1.pdf')
-        part2_path = os.path.join(UPLOAD_FOLDER, f'{session_id}_part2.pdf')
-        part3_path = os.path.join(UPLOAD_FOLDER, f'{session_id}_part3.pdf')
-
-        with open(part1_path, 'wb') as f:
-            f.write(part1.getvalue())
-        with open(part2_path, 'wb') as f:
-            f.write(part2.getvalue())
-        with open(part3_path, 'wb') as f:
-            f.write(part3.getvalue())
+        output_folder, folder_name = split_pdf(file, file.filename)
 
         return jsonify({
             'status': 'success',
-            'session_id': session_id,
-            'files': {
-                'part1': {'name': 'Part1_Pages1-4.pdf', 'url': f'/download/{session_id}/part1'},
-                'part2': {'name': 'Part2_Pages5-6.pdf', 'url': f'/download/{session_id}/part2'},
-                'part3': {'name': 'Part3_Pages7Plus.pdf', 'url': f'/download/{session_id}/part3'}
-            }
+            'folder_name': folder_name,
+            'download_url': f'/download-zip/{folder_name}',
+            'message': f'PDF split into 5 files in folder: {folder_name}'
         }), 200
 
     except ValueError as e:
@@ -137,29 +134,34 @@ def split():
         return jsonify({'status': 'error', 'message': f'Error: {str(e)}'}), 500
 
 
-@app.route('/download/<session_id>/<part>', methods=['GET'])
-def download(session_id, part):
+@app.route('/download-zip/<folder_name>', methods=['GET'])
+def download_zip(folder_name):
     """
-    Download a specific part of the split PDF.
+    Download all 5 PDFs as a ZIP file.
     """
     try:
-        if part not in ['part1', 'part2', 'part3']:
-            return jsonify({'status': 'error', 'message': 'Invalid part'}), 400
+        # Sanitize folder name
+        folder_name = secure_filename(folder_name)
+        folder_path = os.path.join(UPLOAD_FOLDER, folder_name)
 
-        # Map parts to filenames and display names
-        part_map = {
-            'part1': ('Part1_Pages1-4.pdf', f'{session_id}_part1.pdf'),
-            'part2': ('Part2_Pages5-6.pdf', f'{session_id}_part2.pdf'),
-            'part3': ('Part3_Pages7Plus.pdf', f'{session_id}_part3.pdf')
-        }
+        if not os.path.exists(folder_path):
+            return jsonify({'status': 'error', 'message': 'Folder not found'}), 404
 
-        display_name, actual_name = part_map[part]
-        file_path = os.path.join(UPLOAD_FOLDER, actual_name)
+        # Create ZIP file in memory
+        zip_buffer = BytesIO()
+        with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+            for filename in os.listdir(folder_path):
+                file_path = os.path.join(folder_path, filename)
+                if os.path.isfile(file_path):
+                    zip_file.write(file_path, arcname=f'{folder_name}/{filename}')
 
-        if not os.path.exists(file_path):
-            return jsonify({'status': 'error', 'message': 'File not found'}), 404
-
-        return send_file(file_path, as_attachment=True, download_name=display_name, mimetype='application/pdf')
+        zip_buffer.seek(0)
+        return send_file(
+            zip_buffer,
+            mimetype='application/zip',
+            as_attachment=True,
+            download_name=f'{folder_name}.zip'
+        )
 
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
