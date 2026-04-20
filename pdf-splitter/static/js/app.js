@@ -153,8 +153,9 @@ function showResults(data) {
     grid.innerHTML = '';
 
     parts.forEach((part, index) => {
-        // Use encodeURIComponent for spaces in filename
-        const fileUrl = `/download-file/${encodeURIComponent(data.folder_name)}/${encodeURIComponent(part.file)}`;
+        // Actual file on disk = "5452D Final Bill.pdf"
+        const actualFile = `${data.pdf_name} ${part.file}`;
+        const fileUrl = `/download-file/${encodeURIComponent(data.folder_name)}/${encodeURIComponent(actualFile)}`;
 
         const item = document.createElement('div');
         item.className = 'download-item';
@@ -171,8 +172,9 @@ function showResults(data) {
             </div>
         `;
 
+        // downloads as "5452D Final Bill.pdf"
         item.querySelector('.clickable-file').addEventListener('click', () => {
-            downloadFile(fileUrl, part.file);
+            downloadFile(fileUrl, actualFile);
         });
 
         grid.appendChild(item);

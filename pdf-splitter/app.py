@@ -33,30 +33,32 @@ def split_pdf(pdf_file, original_filename):
         if total_pages < 11:
             raise ValueError(f"PDF must have at least 11 pages. Current: {total_pages}")
 
-        pdf_name = os.path.splitext(original_filename)[0]
+        pdf_name = os.path.splitext(original_filename)[0]  # e.g. "5452D"
         safe_name = secure_filename(pdf_name)
         output_folder = os.path.join(UPLOAD_FOLDER, safe_name)
         os.makedirs(output_folder, exist_ok=True)
 
         parts = [
-            (1, 5, "Case Sheet.pdf"),
-            (3, 3, "Progress Note.pdf"),
-            (6, 6, "Final Bill.pdf"),
-            (7, 10, "Letter and Later.pdf"),
+            (1, 5,            "Case Sheet.pdf"),
+            (3, 3,            "Progress Note.pdf"),
+            (6, 6,            "Final Bill.pdf"),
+            (7, 10,           "Letter and Later.pdf"),
             (11, total_pages, "Examination Report.pdf")
         ]
 
-        for start_page, end_page, filename in parts:
+        for start_page, end_page, part_filename in parts:
             writer = PdfWriter()
             start_idx = max(0, start_page - 1)
             end_idx = min(total_pages, end_page)
             for i in range(start_idx, end_idx):
                 writer.add_page(reader.pages[i])
-            output_path = os.path.join(output_folder, filename)
+            # Save as "5452D Final Bill.pdf"
+            actual_filename = f"{pdf_name} {part_filename}"
+            output_path = os.path.join(output_folder, actual_filename)
             with open(output_path, 'wb') as f:
                 writer.write(f)
 
-        return output_folder, safe_name
+        return output_folder, safe_name, pdf_name  # <-- return pdf_name too
 
     except Exception as e:
         try:
@@ -73,6 +75,7 @@ def index():
 
 
 @app.route('/split', methods=['POST'])
+@app.route('/split', methods=['POST'])
 def split():
     try:
         if 'pdf' not in request.files:
@@ -86,11 +89,12 @@ def split():
         if not allowed_file(file.filename):
             return jsonify({'status': 'error', 'message': 'Invalid file type. Only PDF files allowed'}), 400
 
-        output_folder, folder_name = split_pdf(file, file.filename)
+        output_folder, folder_name, pdf_name = split_pdf(file, file.filename)  # <-- unpack 3
 
         return jsonify({
             'status': 'success',
             'folder_name': folder_name,
+            'pdf_name': pdf_name,                           # <-- add this
             'download_url': f'/download-zip/{folder_name}',
             'message': f'PDF split into 5 files in folder: {folder_name}'
         }), 200
